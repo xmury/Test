@@ -1,54 +1,61 @@
 <?php
-//<note>
-//<to>Tove</to>
-//<from>Jani</from>
-//<heading>Reminder</heading>
-//<body>Don't forget me this weekend!</body>
-//</note>
+function xmlParser($file){
+    $test = file($file);                                                        // Открываем файл
 
-$file = 'test.xml'; $test = file($file);
-
-$string_text = "";
-foreach($test as $w) { $string_text .= $w; }
-$arr = str_split($string_text);
-
-$open_teg = false; $in_text = false;
-$teg = ""; $text = "";
-$n_arr = array();
-for ($i = 0; $i < count($arr); $i++) {
-    if ($arr[$i] == "\n" or $arr[$i] == "/") { continue; }
+    $string_text = "";                                                          //
+    foreach($test as $w) { $string_text .= $w; }                                // Преобразуем в массив
+    $arr = str_split($string_text);                                             //
     
-    if ($arr[$i] == "<") {                          // Текст кончился
-        $in_text = false;
+    $openTeg = false; $inText = false;
+    $teg = ""; $text = ""; $nArr = array();
+    
+    for ($i = 0; $i < count($arr); $i++) {
+        if ($arr[$i] == "\n" or $arr[$i] == "/") { continue; }
+        
+        if ($arr[$i] == "<") { $inText = false; }                              // Текст кончился?
+    
+        if ($arr[$i] == '>'){                                                   // Тег кончился?
+            $openTeg = false; $inText = true;
+            if ($teg != "") { $nArr[$teg] = $text; }
+            $teg = ""; $text = "";
+            continue;
+        }
+    
+        if ($arr[$i] == '<') {                                                  // Мы в открывающем теге?
+            $openTeg = true; 
+            continue;                            
+        } 
+    
+        if ($openTeg) { $teg  .= $arr[$i]; }                                   // Если в теге ведём запись
+        if ($inText)  { $text .= $arr[$i]; }                                   // Если в тексте то пишем     
     }
 
-    if ($arr[$i] == '<') {                          // Мы в открывающем теге?
-        $open_teg = true; 
-        continue;                            
-    } 
-
-    if ($arr[$i] == '<' and $arr[$i+1] == '/') {    // Мы в закрывающемся теге?
-        $n_arr[$teg] = $text;
-        $teg = ""; $text = "";
-        $in_text = false; $open_teg = false;
-        continue;
-    }
-
-    if ($arr[$i] == '>'){                           // Тег кончился?
-        $open_teg = false; $in_text = true;
-        if ($teg != "") { $n_arr[$teg] = $text; echo "$i | $text \n"; }
-        $teg = ""; $text = "";
-        continue;
-    }
-
-
-    if ($open_teg) { $teg  .= $arr[$i]; }           // Если в теге ведём запись
-    if ($in_text)  { $text .= $arr[$i]; }           // Если в тексте то пишем
-
-     
+    return $nArr; 
 }
-echo "\n";
-$keys = array_keys($n_arr);                         // Получаем массив ключей
-foreach ($keys as $key){ echo "$key = $n_arr[$key] \n"; } 
 
+
+//---------------------------------------------------------
+//------------------TESTING------ZONE----------------------
+$file  = 'test.xml'; 
+$nArr = xmlParser($file);
+$keys  = array_keys($nArr);                                                    // Получаем массив ключей
+
+foreach ($keys as $key){ echo "$key = $nArr[$key] \n"; } 
+//---------------------------------------------------------
+
+
+/*
+Запасной вариант. Мысль левой пятки правой ноги. 
+Однако зараза практически работает!
+Если маленько подрихтовать основной код то 
+будет работать
+
+if ($arr[$i] == '<' and $arr[$i+1] == '/') {                                // Мы в закрывающем теге?
+    echo "Test $teg | $text | $openTeg \n";
+    if ($teg != "") { $nArr[$teg] = $text; }
+    $teg = ""; $text = "";
+    $inText = false; $openTeg = false;
+    continue;
+}
+*/
 ?>
